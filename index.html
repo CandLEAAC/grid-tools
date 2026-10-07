@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- Everything runs in the browser. This policy stops the page from sending data anywhere. -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; worker-src 'self'; connect-src 'self'; img-src 'self' data: blob:; style-src 'self'; font-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
+  <meta name="referrer" content="no-referrer">
+  <title>Gridset Shrinker | CandLE</title>
+  <meta name="description" content="Make Grid 3 gridsets smaller by shrinking the pictures inside them. Your files never leave your computer.">
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/img/favicon-32.png">
+  <link rel="apple-touch-icon" href="assets/img/favicon-192.png">
+  <link rel="stylesheet" href="assets/css/style.css">
+  <script src="assets/vendor/fflate.min.js" defer></script>
+  <script src="assets/js/core.js" defer></script>
+  <script src="assets/js/app.js" type="module"></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to main content</a>
+
+  <header class="site-header">
+    <div class="wrap header-inner">
+      <img class="logo" src="assets/img/candle-logo-white.png" alt="CandLE" width="320" height="93">
+      <nav aria-label="Page sections">
+        <a href="#shrink">Shrink a gridset</a>
+        <a href="#how-to">How to</a>
+      </nav>
+    </div>
+  </header>
+
+  <main id="main">
+    <section class="hero">
+      <div class="wrap">
+        <h1>Gridset Shrinker</h1>
+        <p class="lead">Make a gridset smaller so it runs smoothly. Only the pictures are made smaller — everything else in your grids stays exactly the same.</p>
+        <p class="privacy"><span class="privacy-icon" aria-hidden="true">🔒</span> Your gridset never leaves this computer. Nothing is uploaded.</p>
+      </div>
+    </section>
+
+    <section id="shrink" class="wrap tool" aria-labelledby="shrink-title">
+      <h2 id="shrink-title" class="visually-hidden">Shrink a gridset</h2>
+
+      <!-- Step 1: choose -->
+      <div id="step-choose" class="card">
+        <label id="drop-zone" class="drop-zone" for="file-input">
+          <input id="file-input" type="file" accept=".gridset,.gridsetx">
+          <span class="drop-icon" aria-hidden="true">
+            <svg viewBox="0 0 48 48" width="56" height="56"><path d="M24 6v24m0-24-9 9m9-9 9 9" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/><path d="M8 30v8a4 4 0 0 0 4 4h24a4 4 0 0 0 4-4v-8" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round"/></svg>
+          </span>
+          <span class="drop-title">Drag your gridset here</span>
+          <span class="drop-or">or</span>
+          <span class="button button-primary">Choose a gridset</span>
+          <span class="drop-hint">Files ending in <strong>.gridset</strong></span>
+        </label>
+      </div>
+
+      <!-- Step 2: working -->
+      <div id="step-working" class="card" hidden>
+        <h3 class="card-title">Shrinking <span id="working-name" class="file-name"></span></h3>
+        <p id="working-status" class="status" aria-live="polite">Getting ready…</p>
+        <div class="progress" role="progressbar" aria-labelledby="working-status" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+          <div id="progress-bar" class="progress-bar"></div>
+        </div>
+        <p class="muted">Please keep this page open. Big gridsets can take a few minutes.</p>
+        <button id="cancel-button" class="button button-secondary" type="button">Cancel</button>
+      </div>
+
+      <!-- Step 3: done -->
+      <div id="step-done" class="card" hidden>
+        <div class="done-header">
+          <span class="done-tick" aria-hidden="true">
+            <svg viewBox="0 0 48 48" width="40" height="40"><circle cx="24" cy="24" r="22" fill="currentColor"/><path d="m14 25 7 7 13-15" fill="none" stroke="#fff" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </span>
+          <h3 class="card-title" id="done-title">Your gridset is ready</h3>
+        </div>
+        <div class="sizes">
+          <div class="size"><span class="size-label">Before</span><span id="size-before" class="size-value"></span></div>
+          <span class="size-arrow" aria-hidden="true">→</span>
+          <div class="size"><span class="size-label">After</span><span id="size-after" class="size-value size-after"></span></div>
+          <div class="size saving"><span class="size-label">Smaller by</span><span id="size-saving" class="size-value"></span></div>
+        </div>
+        <p id="done-summary" class="status"></p>
+        <a id="download-link" class="button button-primary button-large" href="#" download>Download smaller gridset</a>
+        <p class="muted">Then import it into Grid 3 as usual. Please check it on a device before sharing it.</p>
+        <details class="details">
+          <summary>More details</summary>
+          <ul id="done-details"></ul>
+        </details>
+        <button id="again-button" class="button button-secondary" type="button">Shrink another gridset</button>
+      </div>
+
+      <!-- Problem -->
+      <div id="step-error" class="card card-error" hidden role="alert">
+        <h3 class="card-title" id="error-title">We couldn't shrink this file</h3>
+        <p id="error-message"></p>
+        <button id="error-button" class="button button-primary" type="button">Try another file</button>
+      </div>
+
+      <noscript><p class="card card-error">This tool needs JavaScript turned on.</p></noscript>
+    </section>
+
+    <!--
+      ===================================================================
+      HOW TO — edit this section freely.
+      Each step is an <li>. Images can be added to assets/img/ and
+      shown with <img src="assets/img/your-picture.png" alt="what it shows">.
+      ===================================================================
+    -->
+    <section id="how-to" class="how-to" aria-labelledby="how-to-title">
+      <div class="wrap">
+        <h2 id="how-to-title">How to</h2>
+
+        <ol class="steps">
+          <li>
+            <h3>Export your gridset from Grid 3</h3>
+            <p>[Add instructions here.]</p>
+          </li>
+          <li>
+            <h3>Shrink it here</h3>
+            <p>[Add instructions here.]</p>
+          </li>
+          <li>
+            <h3>Import the smaller gridset into Grid 3</h3>
+            <p>[Add instructions here.]</p>
+          </li>
+          <li>
+            <h3>Check it on a device</h3>
+            <p>[Add instructions here.]</p>
+          </li>
+        </ol>
+
+        <h3 class="faq-title">Questions</h3>
+        <div class="faq">
+          <details>
+            <summary>What does this tool change?</summary>
+            <p>Only the pictures stored inside the gridset (for example screenshots and photos). Words, symbols, buttons, sounds, links and settings are copied across exactly as they were. Widgit symbols are not touched.</p>
+          </details>
+          <details>
+            <summary>Will the pictures look worse?</summary>
+            <p>They should look the same. Every picture is checked against the original after it is made smaller, and if it would look different the original picture is kept instead. See-through parts of pictures stay see-through.</p>
+          </details>
+          <details>
+            <summary>Why was my gridset rejected?</summary>
+            <p>Encrypted (protected) gridsets, usually ending in <strong>.gridsetx</strong>, cannot be opened by this tool. Please use the original <strong>.gridset</strong> file instead.</p>
+          </details>
+          <details>
+            <summary>Is my gridset uploaded anywhere?</summary>
+            <p>No. All the work happens inside your web browser, on your computer. The gridset is never sent over the internet.</p>
+          </details>
+          <!-- Add more questions by copying a <details> block above. -->
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="wrap">
+      <p>Made for the CandLE grid team</p>
+    </div>
+  </footer>
+</body>
+</html>

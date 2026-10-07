@@ -1,0 +1,5 @@
+# Sample and test gridsets contain lesson content: never commit them.
+*.gridset
+*.gridsetx
+node_modules/
+.DS_Store
