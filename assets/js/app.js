@@ -214,7 +214,10 @@ function showResult(file, blob, outcome) {
   link.href = currentUrl;
   link.download = file.name;
 
-  if (saving < 0.02) {
+  if (saving < 0.02 && outcome.reasons.get('already shrunk before')) {
+    $('done-title').textContent = 'This gridset has already been shrunk';
+    $('done-summary').textContent = 'Its pictures were made smaller before, so they have been left exactly as they are. You can keep using your original gridset.';
+  } else if (saving < 0.02) {
     $('done-title').textContent = 'This gridset is already small';
     $('done-summary').textContent = 'We could not make the pictures any smaller without changing how they look. You can keep using your original gridset.';
   } else {

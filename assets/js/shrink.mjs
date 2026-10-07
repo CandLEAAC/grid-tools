@@ -14,6 +14,10 @@
  * Grid 3 reads pictures by their content, not their file extension
  * (the sample gridsets already contain JPEG data in files named .png),
  * so file names are never changed.
+ *
+ * Every picture we change gets a small invisible tag (a PNG text chunk or a
+ * JPEG comment). Tagged pictures are never processed again, so pages copied
+ * between gridsets and shrunk many times do not lose quality each time.
  */
 
 /* Quality thresholds. Tuned on real gridsets; see tests/README.md. */
@@ -206,6 +210,81 @@ export function looksTheSame(m) {
 }
 
 /* ------------------------------------------------------------------ */
+/* "Already shrunk" tag                                                */
+/* ------------------------------------------------------------------ */
+const TAG = 'CandLE-GridsetShrinker';
+const TAG_VERSION = '1';
+const ascii = (s) => Uint8Array.from(s, (c) => c.charCodeAt(0));
+
+function startsWith(b, at, prefix) {
+  if (at + prefix.length > b.length) return false;
+  for (let i = 0; i < prefix.length; i++) if (b[at + i] !== prefix[i]) return false;
+  return true;
+}
+
+/** Walk PNG chunks up to the image data; call fn(type, start, length) for each. */
+function pngChunks(b, fn) {
+  let p = 8;
+  while (p + 12 <= b.length) {
+    const len = ((b[p] << 24) | (b[p + 1] << 16) | (b[p + 2] << 8) | b[p + 3]) >>> 0;
+    const type = String.fromCharCode(b[p + 4], b[p + 5], b[p + 6], b[p + 7]);
+    if (type === 'IDAT' || type === 'IEND' || fn(type, p + 8, len)) return;
+    p += 12 + len;
+  }
+}
+
+/** Walk JPEG header segments up to the image data; call fn(marker, start, length). */
+function jpegSegments(b, fn) {
+  let p = 2;
+  while (p + 4 <= b.length && b[p] === 0xff) {
+    const m = b[p + 1];
+    if (m === 0xff) { p++; continue; }
+    if (m === 0xda || m === 0xd9) return;
+    if (m === 0x01 || (m >= 0xd0 && m <= 0xd7)) { p += 2; continue; }
+    const len = (b[p + 2] << 8) | b[p + 3];
+    if (fn(m, p + 4, len - 2)) return;
+    p += 2 + len;
+  }
+}
+
+export function hasTag(b) {
+  const prefix = ascii(TAG);
+  let found = false;
+  const kind = sniff(b);
+  if (kind === 'png') pngChunks(b, (type, at) => (found = type === 'tEXt' && startsWith(b, at, prefix)));
+  else if (kind === 'jpeg') jpegSegments(b, (m, at) => (found = m === 0xfe && startsWith(b, at, prefix)));
+  return found;
+}
+
+export function addTag(b, crc32) {
+  const kind = sniff(b);
+  if (kind === 'png') {
+    // tEXt chunk ("keyword\0text") placed straight after IHDR (which always ends at byte 33).
+    const text = ascii(TAG + '\0' + TAG_VERSION);
+    const chunk = new Uint8Array(12 + text.length);
+    const v = new DataView(chunk.buffer);
+    v.setUint32(0, text.length);
+    chunk.set(ascii('tEXt'), 4);
+    chunk.set(text, 8);
+    v.setUint32(8 + text.length, crc32(chunk, 4, 8 + text.length));
+    const out = new Uint8Array(b.length + chunk.length);
+    out.set(b.subarray(0, 33)); out.set(chunk, 33); out.set(b.subarray(33), 33 + chunk.length);
+    return out;
+  }
+  if (kind === 'jpeg') {
+    // COM segment straight after the start-of-image marker.
+    const text = ascii(TAG + ' ' + TAG_VERSION);
+    const seg = new Uint8Array(4 + text.length);
+    seg[0] = 0xff; seg[1] = 0xfe; seg[2] = (text.length + 2) >> 8; seg[3] = (text.length + 2) & 0xff;
+    seg.set(text, 4);
+    const out = new Uint8Array(b.length + seg.length);
+    out.set(b.subarray(0, 2)); out.set(seg, 2); out.set(b.subarray(2), 2 + seg.length);
+    return out;
+  }
+  throw new Error('cannot tag this picture');
+}
+
+/* ------------------------------------------------------------------ */
 /* Per-picture processing                                              */
 /* ------------------------------------------------------------------ */
 
@@ -223,9 +302,12 @@ function isOpaque(img) {
 /**
  * Shrink one picture.
  * Returns { status: 'shrunk' | 'kept', data?, method?, reason?, quality? }.
- * `jpegInfo` comes from core.js and tells us when a JPEG must be left alone.
+ * `core` is GridCore (core.js): its jpegInfo tells us when a JPEG must be
+ * left alone, and its crc32 is used for the PNG tag.
  */
-export function createShrinker(codecs, ssimFn, jpegInfo) {
+export function createShrinker(codecs, ssimFn, core) {
+  const { jpegInfo, crc32 } = core;
+
   function best(original, candidates) {
     let pick = null;
     for (const c of candidates) if (c && (!pick || c.data.length < pick.data.length)) pick = c;
@@ -235,7 +317,8 @@ export function createShrinker(codecs, ssimFn, jpegInfo) {
 
   function tryCandidate(method, original, make, decode) {
     try {
-      const data = make();
+      // Tag first, so the exact bytes we will save are the ones that get checked.
+      const data = addTag(make(), crc32);
       const m = measure(original, decode(data), ssimFn);
       if (!looksTheSame(m)) return null;
       return { method, data, quality: m };
@@ -285,6 +368,7 @@ export function createShrinker(codecs, ssimFn, jpegInfo) {
 
   return function shrinkImage(bytes) {
     const kind = sniff(bytes);
+    if (kind !== 'other' && hasTag(bytes)) return { status: 'kept', reason: 'already shrunk before' };
     if (kind === 'png') return shrinkPng(bytes);
     if (kind === 'jpeg') return shrinkJpeg(bytes);
     return { status: 'kept', reason: 'not a PNG or JPEG' };
