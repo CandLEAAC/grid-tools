@@ -16,7 +16,7 @@ async function getWasm(path) {
 }
 
 const ready = loadCodecs(vendor, getWasm).then((codecs) =>
-  createShrinker(codecs, self.ssim.ssim, self.GridCore.jpegInfo));
+  createShrinker(codecs, self.ssim.ssim, self.GridCore));
 
 self.onmessage = async (event) => {
   const { id, bytes, method } = event.data;

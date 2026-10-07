@@ -12,7 +12,7 @@ const { ssim } = require('../assets/vendor/ssim/ssim.web.js');
 
 const vendor = new URL('../assets/vendor/', import.meta.url);
 const codecs = await loadCodecs(vendor.href, async (p) => new WebAssembly.Module(fs.readFileSync(new URL(p, vendor))));
-const shrinkImage = createShrinker(codecs, ssim, C.jpegInfo);
+const shrinkImage = createShrinker(codecs, ssim, C);
 
 const [input, output] = process.argv.slice(2);
 const logIdx = process.argv.indexOf('--log');

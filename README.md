@@ -24,6 +24,18 @@ Content-Security-Policy stops it from sending data to any other site.
    Anything that is not a changed picture (grid XML, settings, sounds, Widgit and other
    symbol references, vector `.wmf` symbols) is copied without being touched.
 
+### Shrinking the same pictures again
+
+Pages are often copied from old gridsets into new ones, so the same picture may be
+shrunk many times. To stop it losing quality on every pass, each picture the tool
+changes gets a tiny invisible tag (a PNG `tEXt` chunk or a JPEG comment, keyword
+`CandLE-GridsetShrinker`). Tagged pictures are always left exactly as they are.
+Tested by shrinking a gridset 10 times: passes 2–10 changed nothing, and the result
+after pass 10 was byte-for-byte identical to the result after pass 1.
+
+Pictures the tool decided to keep unchanged are not tagged, because they are still
+the originals. They get the same decision every time.
+
 Grid 3 reads a picture by its content, not by its file extension. The sample gridsets
 already contain JPEG data in files named `.png`, so a picture can become JPEG data
 under its original name without any grid XML changing.
