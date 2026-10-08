@@ -1,11 +1,11 @@
 /*
- * Gridset Image Shrinker — gridset/ZIP handling.
+ * Grid set Image Shrinker — grid set/ZIP handling.
  *
  * Pure functions with no DOM access, so the same file runs in the page,
  * in a Web Worker and in Node (for the test suite).
  *
  *   - ZIP reading / writing that copies every untouched entry byte-for-byte
- *   - Gridset checks (is it a gridset? is it encrypted?)
+ *   - Grid set checks (is it a grid set? is it encrypted?)
  *   - Small helpers for recognising picture formats
  *
  * All picture processing itself lives in shrink.mjs and uses established
@@ -57,28 +57,35 @@
 
   function readZip(buf) {
     const b = buf instanceof Uint8Array ? buf : new Uint8Array(buf);
+    const damaged = () => { throw new GridsetError('not-zip', 'This file looks damaged or incomplete. Try exporting the grid set again.'); };
     if (b.length < 22 || u32(b, 0) !== 0x04034b50) {
-      throw new GridsetError('not-zip', 'This file is not a gridset (it is not in the format Grid 3 uses).');
+      throw new GridsetError('not-zip', 'This file is not a grid set (it is not in the format Grid 3 uses).');
     }
     // End of central directory: search backwards (a comment may follow it).
     let eocd = -1;
     for (let i = b.length - 22; i >= Math.max(0, b.length - 22 - 0xffff); i--) {
-      if (u32(b, i) === 0x06054b50) { eocd = i; break; }
+      if (u32(b, i) === 0x06054b50 && i + 22 + u16(b, i + 20) === b.length) { eocd = i; break; }
     }
-    if (eocd < 0) throw new GridsetError('not-zip', 'This file looks damaged or incomplete. Try exporting the gridset again.');
+    if (eocd < 0) throw new GridsetError('not-zip', 'This file looks damaged or incomplete. Try exporting the grid set again.');
 
     const count = u16(b, eocd + 10);
     const cdSize = u32(b, eocd + 12);
     const cdOffset = u32(b, eocd + 16);
+    if (u16(b, eocd + 4) !== 0 || u16(b, eocd + 6) !== 0 || u16(b, eocd + 8) !== count) {
+      throw new GridsetError('unsupported', 'Split ZIP archives are not supported. Export a single grid set from Grid 3.');
+    }
     if (count === 0xffff || cdOffset === 0xffffffff || cdSize === 0xffffffff) {
-      throw new GridsetError('zip64', 'This gridset is too large for this tool (over 4 GB).');
+      throw new GridsetError('zip64', 'This grid set is too large for this tool (over 4 GB).');
     }
     const comment = b.subarray(eocd + 22, eocd + 22 + u16(b, eocd + 20));
+    const cdEnd = cdOffset + cdSize;
+    if (cdEnd !== eocd) damaged();
 
     const entries = [];
     let p = cdOffset;
     for (let i = 0; i < count; i++) {
-      if (u32(b, p) !== 0x02014b50) throw new GridsetError('not-zip', 'This file looks damaged or incomplete. Try exporting the gridset again.');
+      if (p + 46 > cdEnd) damaged();
+      if (u32(b, p) !== 0x02014b50) throw new GridsetError('not-zip', 'This file looks damaged or incomplete. Try exporting the grid set again.');
       const e = {
         versionMadeBy: u16(b, p + 4),
         versionNeeded: u16(b, p + 6),
@@ -94,22 +101,26 @@
         localOffset: u32(b, p + 42),
       };
       const nLen = u16(b, p + 28), xLen = u16(b, p + 30), cLen = u16(b, p + 32);
+      if (p + 46 + nLen + xLen + cLen > cdEnd || u16(b, p + 34) !== 0) damaged();
       e.nameBytes = b.subarray(p + 46, p + 46 + nLen);
       e.centralExtra = b.subarray(p + 46 + nLen, p + 46 + nLen + xLen);
       e.comment = b.subarray(p + 46 + nLen + xLen, p + 46 + nLen + xLen + cLen);
       e.name = decodeName(e.nameBytes, e.flags);
       if (e.csize === 0xffffffff || e.usize === 0xffffffff || e.localOffset === 0xffffffff) {
-        throw new GridsetError('zip64', 'This gridset is too large for this tool (over 4 GB).');
+        throw new GridsetError('zip64', 'This grid set is too large for this tool (over 4 GB).');
       }
       const lp = e.localOffset;
-      if (u32(b, lp) !== 0x04034b50) throw new GridsetError('not-zip', 'This file looks damaged or incomplete. Try exporting the gridset again.');
+      if (lp + 30 > cdOffset) damaged();
+      if (u32(b, lp) !== 0x04034b50) throw new GridsetError('not-zip', 'This file looks damaged or incomplete. Try exporting the grid set again.');
       const lnLen = u16(b, lp + 26), lxLen = u16(b, lp + 28);
       e.localExtra = b.subarray(lp + 30 + lnLen, lp + 30 + lnLen + lxLen);
       const dataStart = lp + 30 + lnLen + lxLen;
+      if (dataStart + e.csize > cdOffset) damaged();
       e.raw = b.subarray(dataStart, dataStart + e.csize);
       entries.push(e);
       p += 46 + nLen + xLen + cLen;
     }
+    if (p !== cdEnd) damaged();
     return { entries, comment };
   }
 
@@ -130,9 +141,9 @@
     let out;
     if (e.method === 0) out = e.raw;
     else if (e.method === 8) out = fflate.inflateSync(e.raw, { out: new Uint8Array(e.usize) });
-    else throw new GridsetError('unsupported', 'This gridset uses a compression type this tool does not support.');
+    else throw new GridsetError('unsupported', 'This grid set uses a compression type this tool does not support.');
     if (out.length !== e.usize || crc32(out) !== e.crc) {
-      throw new GridsetError('corrupt', `The file "${e.name}" inside the gridset is damaged.`);
+      throw new GridsetError('corrupt', `The file "${e.name}" inside the grid set is damaged.`);
     }
     return out;
   }
@@ -198,7 +209,7 @@
       central.push(ch);
 
       offset += lh.length + raw.length;
-      if (offset > 0xffffffff) throw new GridsetError('zip64', 'The finished gridset would be too large (over 4 GB).');
+      if (offset > 0xffffffff) throw new GridsetError('zip64', 'The finished grid set would be too large (over 4 GB).');
     }
 
     const cdStart = offset;
@@ -226,7 +237,7 @@
   }
 
   /* ------------------------------------------------------------------ */
-  /* Gridset inspection                                                  */
+  /* Grid set inspection                                                  */
   /* ------------------------------------------------------------------ */
   function looksLikeXml(bytes) {
     let i = 0;
@@ -237,11 +248,11 @@
   }
 
   const ENCRYPTED_MESSAGE =
-    'This gridset is encrypted (protected), so its pictures cannot be read or changed. ' +
-    'Please use the original, unprotected .gridset file instead.';
+    'This grid set is licensed, so its pictures cannot be read or changed. ' +
+    'Please get this grid set unlicensed.';
 
   /**
-   * Throws a GridsetError if the zip is not a usable, unencrypted gridset.
+   * Throws a GridsetError if the zip is not a usable, unencrypted grid set.
    * Returns summary info otherwise.
    */
   function inspectGridset(zip) {
@@ -251,7 +262,7 @@
     const grids = entries.filter((e) => /^grids\/[^/]+\/grid\.xml$/.test(lower(e.name)));
 
     if (!settings || grids.length === 0) {
-      throw new GridsetError('not-gridset', 'This file does not look like a Grid 3 gridset. Please choose a .gridset file exported from Grid 3.');
+      throw new GridsetError('not-gridset', 'This file does not look like a Grid 3 grid set. Please choose a .gridset file exported from Grid 3.');
     }
     if (entries.some(isEncryptedEntry)) {
       throw new GridsetError('encrypted', ENCRYPTED_MESSAGE);

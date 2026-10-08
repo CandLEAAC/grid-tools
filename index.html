@@ -6,14 +6,14 @@
   <!-- Everything runs in the browser. This policy stops the page from sending data anywhere. -->
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; worker-src 'self'; connect-src 'self'; img-src 'self' data: blob:; style-src 'self'; font-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
   <meta name="referrer" content="no-referrer">
-  <title>Gridset Shrinker | CandLE</title>
-  <meta name="description" content="Make Grid 3 gridsets smaller by shrinking the pictures inside them. Your files never leave your computer.">
+  <title>Grid set Shrinker | CandLE</title>
+  <meta name="description" content="Make Grid 3 grid sets smaller by shrinking the pictures inside them. Your files never leave your computer.">
   <link rel="icon" type="image/png" sizes="32x32" href="assets/img/favicon-32.png">
   <link rel="apple-touch-icon" href="assets/img/favicon-192.png">
-  <link rel="stylesheet" href="assets/css/style.css">
+  <link rel="stylesheet" href="assets/css/style.css?v=2">
   <script src="assets/vendor/fflate.min.js" defer></script>
-  <script src="assets/js/core.js" defer></script>
-  <script src="assets/js/app.js" type="module"></script>
+  <script src="assets/js/core.js?v=2" defer></script>
+  <script src="assets/js/app.js?v=2" type="module"></script>
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to main content</a>
@@ -22,7 +22,7 @@
     <div class="wrap header-inner">
       <img class="logo" src="assets/img/candle-logo-white.png" alt="CandLE" width="320" height="93">
       <nav aria-label="Page sections">
-        <a href="#shrink">Shrink a gridset</a>
+        <a href="#shrink">Shrink a grid set</a>
         <a href="#how-to">How to</a>
       </nav>
     </div>
@@ -31,14 +31,14 @@
   <main id="main">
     <section class="hero">
       <div class="wrap">
-        <h1>Gridset Shrinker</h1>
-        <p class="lead">Make a gridset smaller so it runs smoothly. Only the pictures are made smaller — everything else in your grids stays exactly the same.</p>
-        <p class="privacy"><span class="privacy-icon" aria-hidden="true">🔒</span> Your gridset never leaves this computer. Nothing is uploaded.</p>
+        <h1>Grid Set Shrinker</h1>
+        <p class="lead">Reduce the size of a grid set to improve user accessibility.<br>Only the pictures are made smaller - the rest of your adaptations are untouched.</p>
+        <p class="privacy"><span class="privacy-icon" aria-hidden="true">🔒</span> Your grid set never leaves this computer. Nothing is uploaded.</p>
       </div>
     </section>
 
     <section id="shrink" class="wrap tool" aria-labelledby="shrink-title">
-      <h2 id="shrink-title" class="visually-hidden">Shrink a gridset</h2>
+      <h2 id="shrink-title" class="visually-hidden">Shrink a grid set</h2>
 
       <!-- Step 1: choose -->
       <div id="step-choose" class="card">
@@ -47,9 +47,9 @@
           <span class="drop-icon" aria-hidden="true">
             <svg viewBox="0 0 48 48" width="56" height="56"><path d="M24 6v24m0-24-9 9m9-9 9 9" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/><path d="M8 30v8a4 4 0 0 0 4 4h24a4 4 0 0 0 4-4v-8" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round"/></svg>
           </span>
-          <span class="drop-title">Drag your gridset here</span>
-          <span class="drop-or">or</span>
-          <span class="button button-primary">Choose a gridset</span>
+          <span class="drop-title">Choose your exported file</span>
+          <span class="button button-primary">Select a grid set</span>
+          <span class="drop-or">Or drag the saved file here</span>
           <span class="drop-hint">Files ending in <strong>.gridset</strong></span>
         </label>
       </div>
@@ -61,7 +61,7 @@
         <div class="progress" role="progressbar" aria-labelledby="working-status" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
           <div id="progress-bar" class="progress-bar"></div>
         </div>
-        <p class="muted">Please keep this page open. Big gridsets can take a few minutes.</p>
+        <p class="muted">Please keep this page open. Big grid sets can take a few minutes.</p>
         <button id="cancel-button" class="button button-secondary" type="button">Cancel</button>
       </div>
 
@@ -71,7 +71,7 @@
           <span class="done-tick" aria-hidden="true">
             <svg viewBox="0 0 48 48" width="40" height="40"><circle cx="24" cy="24" r="22" fill="currentColor"/><path d="m14 25 7 7 13-15" fill="none" stroke="#fff" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
           </span>
-          <h3 class="card-title" id="done-title">Your gridset is ready</h3>
+          <h3 class="card-title" id="done-title">Your grid set is ready</h3>
         </div>
         <div class="sizes">
           <div class="size"><span class="size-label">Before</span><span id="size-before" class="size-value"></span></div>
@@ -80,13 +80,13 @@
           <div class="size saving"><span class="size-label">Smaller by</span><span id="size-saving" class="size-value"></span></div>
         </div>
         <p id="done-summary" class="status"></p>
-        <a id="download-link" class="button button-primary button-large" href="#" download>Download smaller gridset</a>
-        <p class="muted">Then import it into Grid 3 as usual. Please check it on a device before sharing it.</p>
+        <a id="download-link" class="button button-primary button-large" href="#" download>Download smaller grid set</a>
+        <p class="muted">Then <a class="import-link" href="#import-grid-set">import it into Grid 3</a> as usual. Please check it on a device before sharing it.</p>
         <details class="details">
           <summary>More details</summary>
           <ul id="done-details"></ul>
         </details>
-        <button id="again-button" class="button button-secondary" type="button">Shrink another gridset</button>
+        <button id="again-button" class="button button-secondary" type="button">Shrink another grid set</button>
       </div>
 
       <!-- Problem -->
@@ -109,23 +109,39 @@
     <section id="how-to" class="how-to" aria-labelledby="how-to-title">
       <div class="wrap">
         <h2 id="how-to-title">How to</h2>
+        <p class="how-to-intro">From Grid 3 to a smaller grid set in three steps.</p>
 
-        <ol class="steps">
+        <ol class="steps" role="list">
           <li>
-            <h3>Export your gridset from Grid 3</h3>
-            <p>[Add instructions here.]</p>
+            <span class="step-number" aria-hidden="true">1</span>
+            <h3>Export your grid set from Grid 3</h3>
+            <p>Save a <strong>.gridset</strong> file somewhere easy to find, such as your Desktop.</p>
+              <ol class="export-steps">
+              <li>Go to <strong>Grid Explorer</strong>, where your grid sets are listed.</li>
+              <li>Select the <strong>three-line menu</strong> in the top-left corner.</li>
+              <li>Select <strong>Share grid sets</strong>.</li>
+              <li>Choose <strong>Grid set file</strong> on the left.</li>
+              <li>Select the grid set you want to export, then select <strong>Save</strong>.</li>
+              <li>Choose where to save your grid set, give it a name, and select <strong>Save</strong>.</li>
+              </ol>
           </li>
           <li>
+            <span class="step-number" aria-hidden="true">2</span>
             <h3>Shrink it here</h3>
-            <p>[Add instructions here.]</p>
+            <p>Drag your saved file into the box above, or select <strong>Select a grid set</strong>. When it is ready, select <strong>Download smaller grid set</strong>.</p>
           </li>
-          <li>
-            <h3>Import the smaller gridset into Grid 3</h3>
-            <p>[Add instructions here.]</p>
-          </li>
-          <li>
+          <li id="import-grid-set">
+            <span class="step-number" aria-hidden="true">3</span>
             <h3>Check it on a device</h3>
-            <p>[Add instructions here.]</p>
+            <p>Import the smaller grid set into Grid 3 on your device. Keep your original file as a backup.</p>
+            <ol class="export-steps">
+              <li>Go to <strong>Grid Explorer</strong>, where your grid sets are listed.</li>
+              <li>Select the <strong>three-line menu</strong> in the top-left corner.</li>
+              <li>Select <strong>Add grid set</strong>.</li>
+              <li>Choose <strong>Grid set file</strong> on the left.</li>
+              <li>Find the smaller <strong>.gridset</strong> file you downloaded and follow the on-screen prompts to import it.</li>
+              <li>Open the imported grid set from <strong>Grid Explorer</strong> and give the images a brief check before sharing.</li>
+            </ol>
           </li>
         </ol>
 
@@ -133,23 +149,23 @@
         <div class="faq">
           <details>
             <summary>What does this tool change?</summary>
-            <p>Only the pictures stored inside the gridset (for example screenshots and photos). Words, symbols, buttons, sounds, links and settings are copied across exactly as they were. Widgit symbols are not touched.</p>
+            <p>Only the pictures stored inside the grid set (for example screenshots and photos). Text, symbols, cell commands, sounds, links and settings are unaffected.</p>
           </details>
           <details>
             <summary>Will the pictures look worse?</summary>
-            <p>They should look the same. Every picture is checked against the original after it is made smaller, and if it would look different the original picture is kept instead. See-through parts of pictures stay see-through.</p>
+            <p>They should look the same. Every picture is checked against the original after it is made smaller, and if it would look different the original picture is kept instead. Transparency is preserved.</p>
           </details>
           <details>
-            <summary>Why was my gridset rejected?</summary>
-            <p>Encrypted (protected) gridsets, usually ending in <strong>.gridsetx</strong>, cannot be opened by this tool. Please use the original <strong>.gridset</strong> file instead.</p>
+            <summary>Why was my grid set rejected?</summary>
+            <p>Licensed grid sets, usually ending in <strong>.gridsetx</strong>, cannot be opened by this tool. You will need to get your grid set unlicensed before you can shrink it here.</p>
           </details>
           <details>
-            <summary>Is my gridset uploaded anywhere?</summary>
-            <p>No. All the work happens inside your web browser, on your computer. The gridset is never sent over the internet.</p>
+            <summary>Is my grid set uploaded anywhere?</summary>
+            <p>No. All the work happens on your computer. The grid set is never sent over the internet.</p>
           </details>
           <details>
-            <summary>What if I shrink a gridset that has already been shrunk?</summary>
-            <p>That's fine. Pictures this tool has already made smaller are marked, and they're left exactly as they are every time after that. Pages copied between gridsets won't get worse, however many times they're shrunk.</p>
+            <summary>What if I shrink a grid set that has already been shrunk?</summary>
+            <p>Pictures that have already been optimised are left unchanged.</p>
           </details>
           <!-- Add more questions by copying a <details> block above. -->
         </div>
@@ -159,7 +175,7 @@
 
   <footer class="site-footer">
     <div class="wrap">
-      <p>Made for the CandLE grid team</p>
+      <p>Any questions, contact Alice directly via Teams</p>
     </div>
   </footer>
 </body>

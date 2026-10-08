@@ -3,7 +3,16 @@
 Needs Node 20+ and Python 3 with Pillow and NumPy. No `npm install` needed: the tests
 use the same vendored libraries as the page.
 
-## 1. Shrink a gridset outside the browser
+Run the synthetic regression checks without a private grid set:
+
+```sh
+node tests/regressions.mjs
+```
+
+These cover ZIP bounds and round trips, protected PNG metadata, cancellation during
+file reading, worker startup failures, real codec loading, and repeat shrinking.
+
+## 1. Shrink a grid set outside the browser
 
 ```sh
 node tests/shrink-node.mjs "input.gridset" /tmp/output.gridset --log /tmp/details.tsv
@@ -29,16 +38,16 @@ Uses Python's `zipfile` and Pillow, so none of the page's own code is involved. 
 
 It also prints the lowest PSNR among changed pictures as a sanity check.
 
-## 3. Encrypted gridsets
+## 3. Licensed grid sets
 
 ```sh
-node tests/shrink-node.mjs "protected.gridsetx" /tmp/x.gridset
-# → GridsetError: This gridset is encrypted (protected) …
+node tests/shrink-node.mjs "licensed.gridsetx" /tmp/x.gridset
+# → GridsetError: This grid set is licensed …
 ```
 
 ## How the thresholds were chosen
 
-On the four sample gridsets (October 2026), candidates were made with each codec and
+On the four sample grid sets (October 2026), candidates were made with each codec and
 the closest calls were checked by eye at 1× and 3× zoom: photos, screenshots with text,
 diagrams with thin coloured lines, and transparent icons. Pictures right at the limits
 (SSIM ≈ 0.98, mean ΔE ≈ 1.5–1.9) could not be told apart from the originals. Earlier

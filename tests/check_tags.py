@@ -1,11 +1,11 @@
-"""Report which pictures in a gridset carry the "already shrunk" tag.
+"""Report which pictures in a grid set carry the "already shrunk" tag.
 
     python3 tests/check_tags.py exported.gridset [reference.gridset]
 
-Use this on gridsets that have been through Grid 3 (imported, edited, pages
+Use this on grid sets that have been through Grid 3 (imported, edited, pages
 copied, exported) to see whether Grid kept the shrunk pictures as they were.
 
-With a reference (the gridset the tool produced), it also reports whether
+With a reference (the grid set the tool produced), it also reports whether
 each tagged picture is still byte-for-byte the same as the tool wrote it,
 matching pictures by content rather than by file name (Grid may rename
 files when pages are copied).
