@@ -1,27 +1,27 @@
-# Gridset Shrinker
+# Grid set Shrinker
 
-A web page that makes Grid 3 gridsets smaller by shrinking the pictures inside them,
-so large gridsets stop lagging on devices.
+A web page that makes Grid 3 grid sets smaller by shrinking the pictures inside them,
+so large grid sets stop lagging on devices.
 
-- **Only pictures change.** Grids, words, symbols, sounds and settings are copied
+- **Only pictures change.** Grids, text, symbols, sounds and settings are copied
   across exactly as they were.
 - **Pictures look the same.** Every shrunk picture is checked against the original,
   and if it would look different the original is kept.
 - **Nothing is uploaded.** It all runs in your web browser, on your computer.
 
-Typical result: a 46 MB gridset becomes 12.5 MB.
+Typical result: a 46 MB grid set becomes 12.5 MB.
 
 ## Using it
 
-1. Export the gridset from Grid 3 as a `.gridset` file.
-2. Open the Gridset Shrinker page and drag the file onto it.
-3. Click **Download smaller gridset** when it finishes.
-4. Import the smaller gridset into Grid 3 and check it on a device before sharing it.
+1. Export the grid set from Grid 3 as a `.gridset` file.
+2. Open the Grid set Shrinker page and drag the file onto it.
+3. Click **Download smaller grid set** when it finishes.
+4. Import the smaller grid set into Grid 3 and check it on a device before sharing it.
 
-Encrypted (protected) gridsets, usually `.gridsetx`, can't be shrunk. Use the
-original `.gridset` file instead.
+Licensed grid sets, usually `.gridsetx`, can't be shrunk. Choose a grid set that
+does not require a licence.
 
-It's safe to shrink a gridset more than once, or one built from pages of gridsets
+It's safe to shrink a grid set more than once, or one built from pages of grid sets
 that were already shrunk. Pictures that have been shrunk before are always left
 exactly as they are.
 
@@ -50,17 +50,17 @@ the live site automatically within a minute or two. There is no build step.
 Needs Node 20+ and Python 3 with Pillow and NumPy.
 
 ```sh
-# Shrink a gridset using the same code as the web page
+# Shrink a grid set using the same code as the web page
 node tests/shrink-node.mjs original.gridset shrunk.gridset
 
 # Independently check that only pictures changed and nothing is broken
 python3 tests/verify.py original.gridset shrunk.gridset
 ```
 
-More detail, and a tool for checking a gridset that has been through Grid 3, is in
+More detail, and a tool for checking a grid set that has been through Grid 3, is in
 [`tests/README.md`](tests/README.md).
 
-Never commit real gridsets: they contain lesson content. `.gitignore` blocks them.
+Never commit real grid sets: they contain lesson content. `.gitignore` blocks them.
 
 ## How it works
 
@@ -79,7 +79,7 @@ must stay see-through. If a picture can't be made at least 5% smaller, it isn't
 changed.
 
 Every shrunk picture gets a small hidden tag, so it is never processed again. This
-stops quality dropping when pages are copied between gridsets and shrunk repeatedly.
+stops quality dropping when pages are copied between grid sets and shrunk repeatedly.
 Grid 3 keeps the tag when pages are copied (tested).
 
 File names never change. Grid 3 reads pictures by their content, so a `.png` file
@@ -90,7 +90,7 @@ can safely contain JPEG data. Grid already does this itself.
 | `index.html`, `assets/css/` | The page |
 | `assets/js/app.js` | Page logic; runs several pictures at once in the background |
 | `assets/js/shrink.mjs` | Picture shrinking and the "looks the same" check |
-| `assets/js/core.js` | Reading and writing gridsets; rejects encrypted ones |
+| `assets/js/core.js` | Reading and writing grid sets; rejects licensed ones |
 | `assets/vendor/` | Third-party libraries, stored locally |
 | `tests/` | Test and checking scripts |
 

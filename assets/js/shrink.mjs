@@ -1,5 +1,5 @@
 /*
- * Gridset Image Shrinker — picture processing.
+ * Grid set Image Shrinker — picture processing.
  *
  * Every picture gets several candidate versions made with established
  * codec libraries:
@@ -12,15 +12,15 @@
  * candidate wins; if nothing is meaningfully smaller the original is kept.
  *
  * Grid 3 reads pictures by their content, not their file extension
- * (the sample gridsets already contain JPEG data in files named .png),
+ * (the sample grid sets already contain JPEG data in files named .png),
  * so file names are never changed.
  *
  * Every picture we change gets a small invisible tag (a PNG text chunk or a
  * JPEG comment). Tagged pictures are never processed again, so pages copied
- * between gridsets and shrunk many times do not lose quality each time.
+ * between grid sets and shrunk many times do not lose quality each time.
  */
 
-/* Quality thresholds. Tuned on real gridsets; see tests/README.md. */
+/* Quality thresholds. Tuned on real grid sets; see tests/README.md. */
 export const QUALITY = {
   minSsim: 0.98,        // structural similarity of brightness (1 = identical)
   maxMeanDeltaE: 2.0,   // average colour difference (ΔE76) after slight blur; ~2.3 is "just noticeable"
@@ -223,14 +223,41 @@ function startsWith(b, at, prefix) {
 }
 
 /** Walk PNG chunks up to the image data; call fn(type, start, length) for each. */
-function pngChunks(b, fn) {
+function pngChunks(b, fn, stopAtData = true) {
   let p = 8;
   while (p + 12 <= b.length) {
     const len = ((b[p] << 24) | (b[p + 1] << 16) | (b[p + 2] << 8) | b[p + 3]) >>> 0;
     const type = String.fromCharCode(b[p + 4], b[p + 5], b[p + 6], b[p + 7]);
-    if (type === 'IDAT' || type === 'IEND' || fn(type, p + 8, len)) return;
+    if (p + 12 + len > b.length) return;
+    if ((stopAtData && type === 'IDAT') || type === 'IEND' || fn(type, p + 8, len)) return;
     p += 12 + len;
   }
+}
+
+/** Restore the source sRGB rendering intent after PNG codecs strip metadata. */
+function retainSrgb(bytes, intent, crc32) {
+  if (intent === null) return bytes; // Do not assign a colour space to untagged sources.
+  const chunk = new Uint8Array(13);
+  const view = new DataView(chunk.buffer);
+  view.setUint32(0, 1);
+  chunk.set(ascii('sRGB'), 4);
+  chunk[8] = intent;
+  view.setUint32(9, crc32(chunk, 4, 9));
+  // Insert before PLTE/IDAT, replacing any sRGB chunk retained by the codec.
+  const parts = [bytes.subarray(0, 33), chunk];
+  let cursor = 33;
+  pngChunks(bytes, (type, at, length) => {
+    if (type === 'sRGB') {
+      parts.push(bytes.subarray(cursor, at - 8));
+      cursor = at + length + 4;
+    }
+    return false;
+  }, false);
+  parts.push(bytes.subarray(cursor));
+  const result = new Uint8Array(parts.reduce((sum, part) => sum + part.length, 0));
+  let offset = 0;
+  for (const part of parts) { result.set(part, offset); offset += part.length; }
+  return result;
 }
 
 /** Walk JPEG header segments up to the image data; call fn(marker, start, length). */
@@ -328,16 +355,30 @@ export function createShrinker(codecs, ssimFn, core) {
   }
 
   function shrinkPng(bytes) {
+    // Explicit sRGB makes gAMA/cHRM fallback chunks redundant (PNG spec).
+    // Do not mistake these common export hints for a custom colour space.
+    // Animation, custom profiles and orientation still cannot be checked by
+    // comparing the decoder's raw pixels, so keep those originals.
+    let protectedMetadata = false;
+    let srgbIntent = null, fallbackColour = false;
+    pngChunks(bytes, (type, at, length) => {
+      if (type === 'sRGB' && length === 1 && bytes[at] <= 3) srgbIntent = bytes[at];
+      if (type === 'gAMA' || type === 'cHRM') fallbackColour = true;
+      if (['acTL', 'iCCP', 'eXIf', 'cICP', 'mDCv', 'cLLi'].includes(type)) protectedMetadata = true;
+      return false;
+    }, false);
+    if (protectedMetadata || (fallbackColour && srgbIntent === null)) return { status: 'kept', reason: 'animation or display metadata' };
     let img;
     try { img = codecs.decodePng(bytes); } catch (e) { return { status: 'kept', reason: 'picture could not be read' }; }
 
     const cands = [];
+    const optimise = (data) => retainSrgb(codecs.optimisePng(data), srgbIntent, crc32);
     // Lossless, but still checked like every other candidate.
-    cands.push(tryCandidate('lossless', img, () => codecs.optimisePng(bytes), (d) => codecs.decodePng(d)));
+    cands.push(tryCandidate('lossless', img, () => optimise(bytes), (d) => codecs.decodePng(d)));
 
     if (img.width * img.height <= QUALITY.maxPixels) {
       cands.push(tryCandidate('colours', img,
-        () => codecs.optimisePng(codecs.quantize(img)),
+        () => optimise(codecs.quantize(img)),
         (d) => codecs.decodePng(d)));
       if (isOpaque(img)) {
         for (const q of QUALITY.jpegQualities) {

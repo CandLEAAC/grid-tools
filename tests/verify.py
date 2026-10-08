@@ -1,4 +1,4 @@
-"""Independent check of a shrunk gridset against the original (uses Python + Pillow).
+"""Independent check of a shrunk grid set against the original (uses Python + Pillow).
 
     python3 tests/verify.py original.gridset shrunk.gridset
 

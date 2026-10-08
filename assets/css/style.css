@@ -125,6 +125,20 @@ a { color: var(--purple-dark); }
 .done-header .card-title { margin: 0; }
 .done-tick { color: var(--success); display: flex; }
 
+.import-link {
+  display: inline-block;
+  color: inherit;
+  text-decoration: none;
+  padding: 0 3px;
+  border-radius: 3px;
+  background-image: radial-gradient(circle at center, var(--ink-soft) 1.4px, transparent 1.6px);
+  background-size: 10px 4px;
+  background-repeat: repeat-x;
+  background-position: left bottom;
+  transition: background-color 0.15s;
+}
+.import-link:hover, .import-link:focus-visible { background-color: rgba(0, 0, 0, 0.08); }
+
 .sizes { display: flex; align-items: center; gap: 16px 20px; flex-wrap: wrap; margin: 16px 0 20px; }
 .size { display: flex; flex-direction: column; }
 .size-label { font-size: 0.95rem; color: var(--ink-soft); }
@@ -142,19 +156,26 @@ a { color: var(--purple-dark); }
 
 /* How to */
 .how-to { background: #fff; border-top: 1px solid var(--line); padding: 56px 0 64px; }
-.how-to h2 { font-size: 2.2rem; color: var(--purple); }
-.steps { list-style: none; counter-reset: step; padding: 0; margin: 24px 0 40px; display: grid; gap: 16px; }
-.steps li {
-  counter-increment: step; position: relative; padding: 20px 24px 20px 84px;
-  background: var(--bg); border: 1px solid var(--line); border-radius: var(--radius);
+.how-to h2 { font-size: 2.2rem; color: var(--purple-dark); margin-bottom: 8px; }
+.how-to-intro { margin: 0; color: var(--ink-soft); }
+.how-to-intro, .steps p, .export-steps { font-family: "Segoe UI", system-ui, sans-serif; font-size: 1rem; line-height: 1.65; }
+.steps { list-style: none; padding: 0; margin: 32px 0 48px; }
+.steps > li {
+  list-style: none; position: relative; padding: 24px 0 24px 60px;
+  border-top: 1px solid var(--line);
 }
-.steps li::before {
-  content: counter(step); position: absolute; left: 22px; top: 18px;
-  width: 44px; height: 44px; border-radius: 50%; background: var(--purple); color: #fff;
-  display: grid; place-items: center; font-weight: 600; font-size: 1.3rem;
+.step-number {
+  position: absolute; left: 0; top: 24px;
+  width: 36px; height: 36px; border-radius: 50%; background: var(--purple); color: #fff;
+  display: grid; place-items: center; font-weight: 500; font-size: 1.1rem;
 }
-.steps h3 { font-size: 1.3rem; margin-bottom: 4px; }
-.steps p { margin: 0; }
+.steps h3 { font-size: 1.3rem; margin: 4px 0 8px; }
+.steps p { margin: 0; max-width: 64ch; color: var(--ink-soft); }
+.steps strong { font-weight: 600; color: var(--ink); }
+.export-steps { list-style: decimal outside; padding: 0 0 0 24px; margin: 20px 0 0; }
+.export-steps li { padding-left: 4px; color: var(--ink-soft); }
+.export-steps li::marker { color: var(--purple-dark); font-weight: 600; }
+.export-steps li + li { margin-top: 12px; }
 .steps img { max-width: 100%; height: auto; border-radius: 10px; margin-top: 12px; border: 1px solid var(--line); }
 
 .faq-title { font-size: 1.6rem; color: var(--purple); }
@@ -171,8 +192,8 @@ a { color: var(--purple-dark); }
   .card { padding: 22px; }
   .drop-zone { padding: 32px 12px; }
   .saving { margin-left: 0; }
-  .steps li { padding: 70px 18px 18px; }
-  .steps li::before { left: 18px; top: 16px; }
+  .steps > li { padding-left: 44px; }
+  .step-number { width: 30px; height: 30px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
