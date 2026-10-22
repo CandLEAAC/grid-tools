@@ -94,6 +94,44 @@ assert.equal(workers.length, 1, 'failed workers must not be respawned');
 assert.equal(workers[0].stopped, true);
 assert.equal(element('step-error').hidden, false);
 
+// File metadata can disagree with the data read. Both displayed sizes and the
+// result message must use the actual input bytes, including after a reduction.
+const paddedOriginal = zipSync({
+  'Settings0/settings.xml': strToU8('<Settings/>'),
+  'Grids/Home/grid.xml': strToU8('<Grid/>'),
+  'Grids/Home/image.png': new Uint8Array(20000).fill(137),
+}, { level: 0 });
+const paddedZip = C.readZip(paddedOriginal);
+const imageEntry = paddedZip.entries[2];
+// Give the synthetic image a PNG signature so it reaches the controlled worker.
+const pngSignature = Uint8Array.of(137, 80, 78, 71, 13, 10, 26, 10);
+const imageBytes = C.inflateEntry(imageEntry);
+imageBytes.set(pngSignature);
+imageEntry.replacement = C.packReplacement(imageBytes, 0);
+const sizedOriginal = Buffer.concat(C.writeZip(paddedZip.entries, paddedZip.comment));
+for (const metadataSize of [0, 1024]) {
+  for (const reduced of [false, true]) {
+    context.file = { name: 'test.gridset', size: metadataSize,
+      arrayBuffer: async () => sizedOriginal };
+    const completed = vm.runInContext('handleFile(file)', context);
+    await new Promise(resolve => setImmediate(resolve));
+    workers.at(-1).onmessage({ data: reduced
+      ? { id: 1, status: 'shrunk', method: 'lossless', packed: C.packReplacement(pngSignature, 0) }
+      : { id: 1, status: 'kept', reason: 'already small' } });
+    await completed;
+    assert.equal(element('step-done').hidden, false);
+    assert.equal(element('size-before').textContent, '20 KB');
+    assert.equal(element('size-after').textContent, reduced ? '1 KB' : '20 KB');
+    const expectedZip = C.readZip(sizedOriginal);
+    if (reduced) expectedZip.entries[2].replacement = C.packReplacement(pngSignature, 0);
+    const expectedSize = new Blob(C.writeZip(expectedZip.entries, expectedZip.comment)).size;
+    assert.equal(element('size-saving').textContent,
+      Math.round((1 - expectedSize / sizedOriginal.length) * 100) + '%');
+    assert.equal(element('done-title').textContent,
+      reduced ? 'Your grid set is ready' : 'This grid set is already small');
+  }
+}
+
 // Load the real vendored WASM codecs and perform a JPEG encode/decode.
 globalThis.ImageData ??= class { constructor(data, width, height) { Object.assign(this, { data, width, height }); } };
 globalThis.self ??= globalThis;
