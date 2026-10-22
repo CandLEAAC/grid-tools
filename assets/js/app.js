@@ -126,9 +126,12 @@ async function handleFile(file) {
   show('step-working');
 
   let zip;
+  let inputSize;
   try {
     const buffer = await file.arrayBuffer();
     if (id !== runId) return;
+    // Measure the data we actually read, not possibly stale file metadata.
+    inputSize = buffer.byteLength;
     zip = C.readZip(new Uint8Array(buffer));
     C.inspectGridset(zip);
   } catch (err) {
@@ -210,15 +213,15 @@ async function handleFile(file) {
   const blob = new Blob(parts, { type: 'application/octet-stream' });
   currentUrl = URL.createObjectURL(blob);
 
-  showResult(file, blob, outcome);
+  showResult(file, blob, outcome, inputSize);
   } catch (err) {
     console.error(err);
     showError('Could not save the grid set', 'The finished file could not be created. Try a smaller grid set or close other browser tabs and try again.');
   }
 }
 
-function showResult(file, blob, outcome) {
-  const before = file.size, after = blob.size;
+function showResult(file, blob, outcome, inputSize) {
+  const before = inputSize, after = blob.size;
   const saving = Math.max(0, 1 - after / before);
   $('size-before').textContent = formatSize(before);
   $('size-after').textContent = formatSize(after);
