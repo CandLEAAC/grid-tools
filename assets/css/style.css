@@ -199,3 +199,31 @@ a { color: var(--purple-dark); }
 @media (prefers-reduced-motion: reduce) {
   * { transition: none !important; scroll-behavior: auto !important; }
 }
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    --purple-dark: #d8b9df;
+    --purple-tint: #382d40;
+    --ink: #f5eff6;
+    --ink-soft: #c4b9c9;
+    --line: #63566a;
+    --bg: #201c24;
+    --card: #2b2530;
+    --success: #93d8ab;
+    --error: #ffb7ac;
+    --error-tint: #43242a;
+  }
+
+  .skip-link { background: var(--ink); color: var(--bg); }
+  .button-primary { background: #b8400c; }
+  .button-primary:hover { background: #a43709; }
+  .button-secondary, .how-to { background: var(--card); }
+  .button-secondary { border-color: var(--purple-dark); }
+  .button-secondary:hover { background: var(--purple-tint); }
+  .drop-icon, .faq-title { color: var(--purple-dark); }
+  .drop-zone:hover, .drop-zone.is-dragging { border-color: var(--purple-dark); }
+  .import-link:hover, .import-link:focus-visible { background-color: var(--purple-tint); }
+  .saving { background: #253b2d; }
+  .site-footer { background: #5e3f65; }
+}
